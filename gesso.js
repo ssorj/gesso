@@ -183,7 +183,12 @@ class Gesso {
                 this.createText(elem, options);
             } else if (typeof options === "object") {
                 if (options.hasOwnProperty("text")) {
-                    this.createText(elem, options["text"]);
+                    let text = options["text"];
+
+                    if (text != null) {
+                        this.createText(elem, text);
+                    }
+
                     delete options["text"];
                 }
 
@@ -274,37 +279,41 @@ class Gesso {
         oldElement.parentNode.replaceChild(newElement, oldElement);
     }
 
-    formatDuration(milliseconds) {
-        if (milliseconds == null) {
+    formatDuration(millis, suffixes) {
+        if (millis == null) {
             return "-";
         }
 
-        let seconds = Math.round(milliseconds / 1000);
-        let minutes = Math.round(milliseconds / 60 / 1000);
-        let hours = Math.round(milliseconds / 3600 / 1000);
-        let days = Math.round(milliseconds / 86400 / 1000);
-        let weeks = Math.round(milliseconds / 432000 / 1000);
-
-        if (weeks >= 2) {
-            return `${weeks} weeks`;
+        if (suffixes == null) {
+            suffixes = [
+                " years",
+                " weeks",
+                " days",
+                " hours",
+                " minutes",
+                " seconds",
+                " millis",
+            ];
         }
 
-        if (days >= 2) {
-            return `${days} days`;
-        }
+        let seconds = Math.round(millis / 1000);
+        let minutes = Math.round(millis / 60 / 1000);
+        let hours = Math.round(millis / 3600 / 1000);
+        let days = Math.round(millis / 86400 / 1000);
+        let weeks = Math.round(millis / 432000 / 1000);
+        let years = Math.round(millis / 31536000 / 1000);
 
-        if (hours >= 1) {
-            return `${hours} hours`;
-        }
+        if (years > 1)   return `${years}${suffixes[0]}`;
+        if (weeks > 1)   return `${weeks}${suffixes[1]}`;
+        if (days > 1)    return `${days}${suffixes[2]}`;
+        if (hours > 1)   return `${hours}${suffixes[3]}`;
+        if (minutes > 1) return `${minutes}${suffixes[4]}`;
+        if (seconds > 1) return `${seconds}${suffixes[5]}`;
 
-        if (minutes >= 1) {
-            return `${minutes} minutes`;
-        }
+        return `${Math.round(millis)}${suffixes[6]}`;
+    }
 
-        if (seconds === 1) {
-            return "1 second";
-        }
-
-        return `${seconds} seconds`;
+    formatDurationBrief(millis) {
+        return this.formatDuration(millis, ["y", "w", "d", "h", "m", "s", "ms"]);
     }
 }
