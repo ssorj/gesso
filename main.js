@@ -18,6 +18,8 @@
 const $ = document.querySelector.bind(document);
 const $$ = document.querySelectorAll.bind(document);
 
+// DOM and request accessors
+
 Element.prototype.$ = function () {
   return this.querySelector.apply(this, arguments);
 };
@@ -40,6 +42,8 @@ const $p = function (name, defaultValue) {
     return new URL(window.location).$p(name, defaultValue);
 }
 
+// String formatting functions
+
 function capitalize(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
@@ -56,11 +60,93 @@ function nvl(value, replacement, otherwise) {
     }
 }
 
-window.$ = $;
-window.$$ = $$;
-window.$p = $p;
-window.capitalize = capitalize;
-window.nvl = nvl;
+// Unlike toISOString, this does not do any timezone conversions
+export function formatISODate(datetime) {
+    const year = datetime.getFullYear();
+    const month = String(datetime.getMonth() + 1).padStart(2, "0");
+    const day = String(datetime.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`
+}
+
+// Unlike toISOString, this does not do any timezone conversions
+export function formatISOTime(datetime) {
+    const hours = String(datetime.getHours()).padStart(2, "0");
+    const minutes = String(datetime.getMinutes()).padStart(2, "0");
+    const seconds = String(datetime.getSeconds()).padStart(2, "0");
+
+    return `${hours}:${minutes}:${seconds}`
+}
+
+export function formatDuration(millis, suffixes) {
+    if (millis == null) {
+        return "-";
+    }
+
+    if (suffixes == null) {
+        suffixes = [
+            " years",
+            " weeks",
+            " days",
+            " hours",
+            " minutes",
+            " seconds",
+            " millis",
+        ];
+    }
+
+    let prefix = "";
+
+    if (millis < 0) {
+        prefix = "-";
+    }
+
+    millis = Math.abs(millis);
+
+    const seconds = Math.round(millis / 1000);
+    const minutes = Math.round(millis / 60 / 1000);
+    const hours = Math.round(millis / 3600 / 1000);
+    const days = Math.round(millis / 86400 / 1000);
+    const weeks = Math.round(millis / 604800 / 1000);
+    const years = Math.round(millis / 31536000 / 1000);
+
+    if (years >= 1)   return `${prefix}${years}${suffixes[0]}`;
+    if (weeks >= 1)   return `${prefix}${weeks}${suffixes[1]}`;
+    if (days >= 1)    return `${prefix}${days}${suffixes[2]}`;
+    if (hours >= 1)   return `${prefix}${hours}${suffixes[3]}`;
+    if (minutes >= 1) return `${prefix}${minutes}${suffixes[4]}`;
+    if (seconds >= 1) return `${prefix}${seconds}${suffixes[5]}`;
+    if (millis == 0) return "0";
+
+    return `${prefix}${Math.round(millis)}${suffixes[6]}`;
+}
+
+export function formatDurationBrief(millis) {
+    return formatDuration(millis, ["y", "w", "d", "h", "m", "s", "ms"]);
+}
+
+export function formatBoolean(value) {
+    if (value) return "Yes";
+    else return "No";
+}
+
+export function plural(noun, count, plural) {
+    if (count == 1) {
+        return noun;
+    }
+
+    if (!plural) {
+        if (noun.endsWith("s")) {
+            plural = `${noun}es`;
+        } else {
+            plural = `${noun}s`;
+        }
+    }
+
+    return plural;
+}
+
+// Element creation functions
 
 export function createElement(parent, tag, options) {
     const elem = document.createElement(tag);
@@ -204,91 +290,7 @@ export function createFieldTable(parent, fields, options) {
     return elem;
 }
 
-// Unlike toISOString, this does not do any timezone conversions
-export function formatISODate(datetime) {
-    const year = datetime.getFullYear();
-    const month = String(datetime.getMonth() + 1).padStart(2, "0");
-    const day = String(datetime.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`
-}
-
-// Unlike toISOString, this does not do any timezone conversions
-export function formatISOTime(datetime) {
-    const hours = String(datetime.getHours()).padStart(2, "0");
-    const minutes = String(datetime.getMinutes()).padStart(2, "0");
-    const seconds = String(datetime.getSeconds()).padStart(2, "0");
-
-    return `${hours}:${minutes}:${seconds}`
-}
-
-export function formatDuration(millis, suffixes) {
-    if (millis == null) {
-        return "-";
-    }
-
-    if (suffixes == null) {
-        suffixes = [
-            " years",
-            " weeks",
-            " days",
-            " hours",
-            " minutes",
-            " seconds",
-            " millis",
-        ];
-    }
-
-    let prefix = "";
-
-    if (millis < 0) {
-        prefix = "-";
-    }
-
-    millis = Math.abs(millis);
-
-    const seconds = Math.round(millis / 1000);
-    const minutes = Math.round(millis / 60 / 1000);
-    const hours = Math.round(millis / 3600 / 1000);
-    const days = Math.round(millis / 86400 / 1000);
-    const weeks = Math.round(millis / 604800 / 1000);
-    const years = Math.round(millis / 31536000 / 1000);
-
-    if (years >= 1)   return `${prefix}${years}${suffixes[0]}`;
-    if (weeks >= 1)   return `${prefix}${weeks}${suffixes[1]}`;
-    if (days >= 1)    return `${prefix}${days}${suffixes[2]}`;
-    if (hours >= 1)   return `${prefix}${hours}${suffixes[3]}`;
-    if (minutes >= 1) return `${prefix}${minutes}${suffixes[4]}`;
-    if (seconds >= 1) return `${prefix}${seconds}${suffixes[5]}`;
-    if (millis == 0) return "0";
-
-    return `${prefix}${Math.round(millis)}${suffixes[6]}`;
-}
-
-export function formatDurationBrief(millis) {
-    return formatDuration(millis, ["y", "w", "d", "h", "m", "s", "ms"]);
-}
-
-export function formatBoolean(value) {
-    if (value) return "Yes";
-    else return "No";
-}
-
-export function plural(noun, count, plural) {
-    if (count == 1) {
-        return noun;
-    }
-
-    if (!plural) {
-        if (noun.endsWith("s")) {
-            plural = `${noun}es`;
-        } else {
-            plural = `${noun}s`;
-        }
-    }
-
-    return plural;
-}
+// JSON request functions
 
 export function fetchJSON(url, responseDataHandler, errorHandler) {
     console.log("Fetching data from", url);
@@ -334,6 +336,8 @@ export function postJSON(url, requestData, responseDataHandler, errorHandler) {
             }
         });
 }
+
+// Higher-level abstractions for pages and content
 
 export class Page {
     constructor(router, path, html) {
@@ -499,3 +503,11 @@ export class Tabs {
         container.$(`:scope > div[data-tab='${selectedTab}']`).classList.add("selected");
     }
 }
+
+// Global functions
+
+window.$ = $;
+window.$$ = $$;
+window.$p = $p;
+window.capitalize = capitalize;
+window.nvl = nvl;
